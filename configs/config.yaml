@@ -1,0 +1,53 @@
+﻿# ==========================================
+# 基础服务配置 (Server)
+# ==========================================
+server:
+  name: "nexus" # 服务名称
+  mode: "debug" # 运行模式: debug (开发), release (生产), test
+  http_port: 9003 # 前端/API 访问端口 (Gin)
+  grpc_port: 9090 # Master-Agent 通信端口 (gRPC)
+  read_timeout: 60 # HTTP 读取超时 (秒)
+  write_timeout: 60 # HTTP 写入超时 (秒)
+
+# ==========================================
+# 数据库配置 (Database - GORM)
+# ==========================================
+data:
+  database:
+    driver: "mysql" # 数据库类型: mysql 或 postgres
+    # 连接字符串 (DSN) - 请修改账号密码
+    # MySQL 示例: user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local
+    source: "root:123456@tcp(127.0.0.1:3306)/nexus_db?charset=utf8mb4&parseTime=True&loc=Local"
+    max_idle_conns: 10 # 空闲连接池大小
+    max_open_conns: 100 # 最大打开连接数
+    conn_max_lifetime: 3600 # 连接最大存活时间 (秒)
+    log_level: "warn" # GORM 日志级别: silent, error, warn, info
+
+  # 缓存配置 (Redis) - 用于字典、Session、频繁读取的配置
+  redis:
+    addr: "127.0.0.1:6379"
+    password: "" # 如果没有密码留空
+    db: 0 # 使用的数据库索引
+    pool_size: 20 # 连接池大小
+
+# ==========================================
+# 安全与认证 (Security)
+# ==========================================
+jwt:
+  secret: "change-this-to-a-long-random-string" # JWT 签名密钥
+  expire: 7200 # Token 过期时间 (秒)，默认 2 小时
+  issuer: "nexus-admin" # 签发者
+
+# ==========================================
+# 日志配置 (Logging - Zap/Lumberjack)
+# ==========================================
+log:
+  level: "info" # debug, info, warn, error
+  format: "json" # json (生产环境推荐) 或 console (开发环境推荐)
+  director: "./logs" # 日志存放文件夹
+  link_name: "latest_log" # 软链接名称
+  show_line: true # 是否显示代码行号
+  max_size: 100 # 每个日志文件最大尺寸 (MB)
+  max_backups: 10 # 保留旧文件个数
+  max_age: 30 # 保留旧文件天数
+  compress: true # 是否压缩旧日志
