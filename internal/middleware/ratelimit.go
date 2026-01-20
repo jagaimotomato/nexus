@@ -1,19 +1,19 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
+	"nexus/internal/data" // 引入 data 包使用 RDB
+	"nexus/internal/response"
+	"nexus/internal/service"
 	"sync"
 	"time"
 
-	"nexus/internal/service" // 引用 Service 层
+	"nexus/internal/logger"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"golang.org/x/time/rate"
-)
-
-// 简单的违规计数器 (生产环境建议用 Redis)
-var (
-	violationStore sync.Map
 )
 
 // IPRateLimiter 包装标准库的限流器
@@ -50,23 +50,22 @@ func RateLimitWithAutoBan(qps int, burst int) gin.HandlerFunc {
 		// 1. 如果限流器不允许通过 (令牌用光了)
 		if !l.Allow() {
 			// 2. 增加违规计数
-			count := incrementViolation(ip)
+			count := incrementViolationRedis(ip)
 
-			// 3. 判断是否触发自动封禁
-			// 规则: 如果短时间内违规超过 20 次，封禁 24 小时
 			if count > 20 {
+				logger.Log.Warn("触发自动封禁", zap.String("ip", ip), zap.Int("violation_count", count))
+				
 				service.BanIP(ip, "Auto Ban: Rate Limit Abuse", 24*time.Hour)
 				
-				c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-					"error": "IP Blocked due to abusive behavior",
-				})
+				// 封禁响应：HTTP 403 + 标准 JSON
+				response.Result(c, http.StatusForbidden, response.Forbidden, "IP Blocked due to abusive behavior", nil)
+				c.Abort()
 				return
 			}
 
-			// 4. 普通限流提示
-			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
-				"error": "Too many requests, slow down",
-			})
+			// 限流响应：HTTP 429 + 标准 JSON
+			response.Result(c, http.StatusTooManyRequests, response.TooManyRequests, "Too many requests, slow down", nil)
+			c.Abort()
 			return
 		}
 
@@ -74,19 +73,21 @@ func RateLimitWithAutoBan(qps int, burst int) gin.HandlerFunc {
 	}
 }
 
-// incrementViolation 增加违规次数 (简单的内存实现，带简单的重置机制)
-// 实际生产中这里应该用 Redis.Incr 并设置 1 分钟过期
-func incrementViolation(ip string) int {
-	v, _ := violationStore.LoadOrStore(ip, 0)
-	count := v.(int) + 1
-	violationStore.Store(ip, count)
+func incrementViolationRedis(ip string) int {
+	ctx := context.Background()
+	key := "violation:" + ip
 
-	// 简单清理逻辑: 启动一个协程，1分钟后把这个 IP 的违规数清零
-	// (注意: 这只是极简演示，防止内存泄漏。严谨做法是用 Redis)
-	if count == 1 {
-		time.AfterFunc(1*time.Minute, func() {
-			violationStore.Delete(ip)
-		})
+	// 原子递增
+	count, err := data.RDB.Incr(ctx, key).Result()
+	if err != nil {
+		logger.Log.Error("Redis Incr error", zap.Error(err))
+		return 0
 	}
-	return count
+
+	// 设置过期时间
+	if count == 1 {
+		data.RDB.Expire(ctx, key, 1*time.Minute)
+	}
+
+	return int(count)
 }

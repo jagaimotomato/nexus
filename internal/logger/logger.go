@@ -19,6 +19,11 @@ var (
 
 // InitLogger 初始化入口
 func InitLogger(cfg *conf.Log) {
+	// 1. 确保日志根目录存在 (例如 ./logs)
+    // Lumberjack 虽然会尝试创建，但显式创建更稳健
+    if ok, _ := pathExists(cfg.Director); !ok {
+        _ = os.MkdirAll(cfg.Director, os.ModePerm)
+    }
 	// 1. 公用的编码器配置 (JSON)
 	encoder := getEncoder(cfg.Format)
 

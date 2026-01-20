@@ -20,7 +20,6 @@ func InitDB() {
 	dsn := c.Source
 
 	gormConfig := &gorm.Config{
-		// 命名策略: 把结构体 Blacklist 映射为表名 blacklists (蛇形复数)
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true,
 			
