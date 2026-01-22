@@ -10,4 +10,18 @@ const routes: RouteObject[] = [
     path: "/login",
     element: <Login />,
   },
+  {
+    path: "/",
+    element: <BasicLayout />,
+    children: [
+      {
+        path: "/",
+        element: <Navigate to="/dashboard" replace />,
+      },
+    ],
+  },
+  {
+    path: "*",
+    element: <Navigate to="/404" replace />,
+  },
 ];
