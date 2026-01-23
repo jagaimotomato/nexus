@@ -9,3 +9,9 @@ vendor/
 .env
 .idea/
 .vscode/
+web/node_modules/
+web/dist/
+web/dist-ssr/
+web/*.local
+web/.vscode/
+web/.idea/

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Navigate, useLocation } from 'react-router'
+import { Navigate, useLocation } from 'react-router-dom'
 import useUserStore from '@/store/useUserStore'
 
 interface AuthGuardProps {
@@ -7,7 +7,7 @@ interface AuthGuardProps {
 }
 
 const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
-  const token = useUserStore((state: any) => state.token)
+  const token = useUserStore((state) => state.token)
   const location = useLocation()
   if (!token) {
     return <Navigate to="/login" state={{ from: location }} replace />
