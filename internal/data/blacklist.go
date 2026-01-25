@@ -15,7 +15,7 @@ type Blacklist struct {
 }
 
 func (Blacklist) TableName() string {
-	return "blacklist"
+	return "sys_blacklist"
 }
 
 func InitBlacklist(db *gorm.DB) {

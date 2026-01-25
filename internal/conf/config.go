@@ -11,6 +11,7 @@ type Config struct {
 	Data   Data   `mapstructure:"data"`
 	Jwt    Jwt    `mapstructure:"jwt"`
 	Log    Log    `mapstructure:"log"`
+	RateLimit RateLimit `mapstructure:"ratelimit"`
 }
 
 type Server struct {
@@ -58,6 +59,11 @@ type Log struct {
 	MaxBackups int    `mapstructure:"max_backups"`
 	MaxAge     int    `mapstructure:"max_age"`
 	Compress   bool   `mapstructure:"compress"`
+}
+
+type RateLimit struct {
+	Qps int `mapstructure:"qps"`
+	Burst int `mapstructure:"burst"`
 }
 
 var GlobalConfig Config

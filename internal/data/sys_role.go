@@ -11,3 +11,7 @@ type Role struct {
 	// gorm 会自动创建中间表 sys_role_menus
 	// Menus []*Menu `gorm:"many2many:sys_role_menus;"`
 }
+
+func (Role) TableName() string {
+	return "sys_role"
+}

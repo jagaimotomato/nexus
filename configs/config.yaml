@@ -17,7 +17,7 @@ data:
     driver: "mysql" # 数据库类型: mysql 或 postgres
     # 连接字符串 (DSN) - 请修改账号密码
     # MySQL 示例: user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local
-    source: "root:123456@tcp(127.0.0.1:3306)/nexus_db?charset=utf8mb4&parseTime=True&loc=Local"
+    source: "root:793148625@tcp(127.0.0.1:3306)/nexus?charset=utf8mb4&parseTime=True&loc=Local"
     max_idle_conns: 10 # 空闲连接池大小
     max_open_conns: 100 # 最大打开连接数
     conn_max_lifetime: 3600 # 连接最大存活时间 (秒)
@@ -51,3 +51,7 @@ log:
   max_backups: 10 # 保留旧文件个数
   max_age: 30 # 保留旧文件天数
   compress: true # 是否压缩旧日志
+
+ratelimit:
+  qps: 10 # 每秒允许请求数
+  burst: 20 # 允许瞬间爆发数
