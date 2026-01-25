@@ -1,3 +1,4 @@
+@import "tailwindcss";
 html,
 body,
 #root {
@@ -5,5 +6,3 @@ body,
   margin: 0;
   padding: 0;
 }
-
-@import "tailwindcss";
