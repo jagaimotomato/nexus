@@ -1,0 +1,14 @@
+{"level":"INFO","ts":"2026-02-02 09:41:42.939","caller":"server/main.go:32","msg":"服务启动中...","config":{"Name":"nexus","Mode":"debug","HttpPort":9003,"GrpcPort":9090,"ReadTimeout":60,"WriteTimeout":60}}
+{"level":"INFO","ts":"2026-02-02 09:41:42.977","caller":"data/db.go:87","msg":"确保数据库存在","db_name":"nexus"}
+{"level":"INFO","ts":"2026-02-02 09:41:42.980","caller":"data/db.go:50","msg":"MySQL 连接成功","dsn":"root:***Local"}
+{"level":"FATAL","ts":"2026-02-02 09:41:45.068","caller":"data/redis.go:30","msg":"Redis 连接失败","error":"dial tcp 127.0.0.1:6379: connectex: No connection could be made because the target machine actively refused it.","addr":"127.0.0.1:6379"}
+{"level":"INFO","ts":"2026-02-02 09:59:11.593","caller":"server/main.go:32","msg":"服务启动中...","config":{"Name":"nexus","Mode":"debug","HttpPort":9003,"GrpcPort":9090,"ReadTimeout":60,"WriteTimeout":60}}
+{"level":"INFO","ts":"2026-02-02 09:59:11.925","caller":"data/db.go:87","msg":"确保数据库存在","db_name":"nexus"}
+{"level":"INFO","ts":"2026-02-02 09:59:11.928","caller":"data/db.go:50","msg":"MySQL 连接成功","dsn":"root:***Local"}
+{"level":"INFO","ts":"2026-02-02 09:59:11.933","caller":"data/redis.go:33","msg":"Redis 连接成功","addr":"127.0.0.1:6379"}
+{"level":"INFO","ts":"2026-02-02 09:59:11.933","caller":"data/migrate.go:10","msg":"开始迁移数据库表结构..."}
+{"level":"INFO","ts":"2026-02-02 09:59:12.109","caller":"data/migrate.go:17","msg":"数据库表结构迁移完成"}
+{"level":"INFO","ts":"2026-02-02 09:59:12.113","caller":"service/ip_security.go:39","msg":"黑名单加载完成","count":0}
+{"level":"INFO","ts":"2026-02-02 09:59:12.113","caller":"service/init_data.go:13","msg":"正在检查并初始化基础数据..."}
+{"level":"INFO","ts":"2026-02-02 09:59:12.195","caller":"service/init_data.go:51","msg":"初始化管理员账号成功: admin / 123456"}
+{"level":"INFO","ts":"2026-02-02 09:59:12.209","caller":"server/main.go:45","msg":"服务启动成功","addr":":9003"}

@@ -12,6 +12,8 @@ interface Result<T = any> {
   data: T;
 }
 
+console.log(import.meta.env.VITE_API_URL);
+
 const service: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   timeout: 10000,
@@ -28,7 +30,7 @@ service.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  },
+  }
 );
 
 service.interceptors.response.use(
@@ -69,7 +71,7 @@ service.interceptors.response.use(
     }
     message.error(msg);
     return Promise.reject(error);
-  },
+  }
 );
 
 export default service;

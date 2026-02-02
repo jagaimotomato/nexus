@@ -1,5 +1,10 @@
 package data
 
+import (
+	"errors"
+
+	"gorm.io/gorm"
+)
 type User struct {
 	BaseModel
 	Username string `gorm:"uniqueIndex;size:100;not null;comment:用户名"`
@@ -16,4 +21,16 @@ type User struct {
 
 func (User) TableName() string {
 	return "sys_user"
+}
+
+func GetUserByUsername(username string) (*User, error) {
+	var user User
+	err := DB.Where("username = ?", username).Preload("Roles").First(&user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
 }

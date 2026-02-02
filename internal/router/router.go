@@ -6,6 +6,7 @@ import (
 	"nexus/internal/middleware"
 
 	"nexus/internal/api"
+	"nexus/internal/handler"
 
 	"github.com/gin-gonic/gin"
 )
@@ -37,11 +38,19 @@ func registerAPIRoutes(r *gin.Engine) {
 		public.POST("/auth/captcha", authAPI.GetCaptcha)
 		public.POST("/auth/login", authAPI.Login)
 	}
-
+    menuHandler := &handler.MenuHandler{}
 	private := r.Group("/api/v1")
 	private.Use(middleware.JWTAuth())
 	{
 		private.POST("/auth/logout", authAPI.Logout)
+
+		menu := private.Group("/menus")
+		{
+			menu.GET("", menuHandler.GetList)
+			menu.POST("", menuHandler.Create)
+			menu.PUT("/:id", menuHandler.Update)
+			menu.DELETE("/:id", menuHandler.Delete)
+		}
 	}
 
 }
