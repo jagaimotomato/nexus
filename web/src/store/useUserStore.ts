@@ -1,36 +1,36 @@
 import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
+
+interface UserInfo {
+  id: number;
+  username: string;
+  name: string;
+  avatar: string;
+  roles: string[];
+}
 
 interface UserState {
   token: string;
-  userInfo: {
-    name: string;
-    avatar?: string;
-    id: number;
-    username: string;
-    roles?: any[];
-  } | null;
-  setUserInfo: (user: any) => void;
+  userInfo: UserInfo | null;
+  setUserInfo: (user: UserInfo) => void;
   login: (token: string) => void;
   logout: () => void;
 }
 
-const useUserStore = create<UserState>((set) => ({
-  token: localStorage.getItem("token") || "",
-  userInfo: localStorage.getItem("userInfo")
-    ? JSON.parse(localStorage.getItem("userInfo")!)
-    : null,
-  login: (token: string) => {
-    localStorage.setItem("token", token);
-    set({ token });
-  },
-  setUserInfo: (user: any) => {
-    localStorage.setItem("userInfo", JSON.stringify(user));
-    set({ userInfo: user });
-  },
-  logout: () => {
-    localStorage.removeItem("token");
-    set({ token: "", userInfo: null });
-  },
-}));
+const useUserStore = create<UserState>()(
+  persist(
+    (set) => ({
+      token: "",
+      userInfo: null,
+      login: (token: string) => set({ token }),
+      logout: () => set({ token: "", userInfo: null }),
+      setUserInfo: (user: UserInfo) => set({ userInfo: user }),
+    }),
+    {
+      name: "nexus-storage",
+      storage: createJSONStorage(() => localStorage),
+    }
+  )
+);
 
 export default useUserStore;

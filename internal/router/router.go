@@ -52,5 +52,4 @@ func registerAPIRoutes(r *gin.Engine) {
 			menu.DELETE("/:id", menuHandler.Delete)
 		}
 	}
-
 }

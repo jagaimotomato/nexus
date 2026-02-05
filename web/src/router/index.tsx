@@ -1,18 +1,22 @@
-import { createBrowserRouter, Navigate, type RouteObject } from 'react-router-dom';
+import {
+  createBrowserRouter,
+  Navigate,
+  type RouteObject,
+} from "react-router-dom";
 
-import BasicLayout from '@/layouts/BasicLayout';
-import AuthGuard from './authGuard';
-import Login from '@/pages/login';
-import DashboardPage from '@/pages/dashboard';
-import NotFoundPage from '@/pages/404';
+import BasicLayout from "@/layouts/BasicLayout";
+import AuthGuard from "./authGuard";
+import Login from "@/pages/login";
+import Dashboard from "@/pages/dashboard";
+import NotFoundPage from "@/pages/404";
 
 const routes: RouteObject[] = [
   {
-    path: '/login',
+    path: "/login",
     element: <Login />,
   },
   {
-    path: '/',
+    path: "/",
     element: (
       <AuthGuard>
         <BasicLayout />
@@ -20,21 +24,21 @@ const routes: RouteObject[] = [
     ),
     children: [
       {
-        path: '/',
+        index: true,
         element: <Navigate to="/dashboard" replace />,
       },
       {
-        path: '/dashboard',
-        element: <DashboardPage />,
+        path: "dashboard",
+        element: <Dashboard />,
       },
     ],
   },
   {
-    path: '/404',
+    path: "/404",
     element: <NotFoundPage />,
   },
   {
-    path: '*',
+    path: "*",
     element: <Navigate to="/404" replace />,
   },
 ];
