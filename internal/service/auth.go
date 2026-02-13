@@ -1,26 +1,14 @@
 package service
 
 import (
+	"errors"
+	"nexus/internal/conf"
+	"nexus/internal/data"
 	"nexus/internal/utils"
 	"time"
 
-	"nexus/internal/data"
-
-	"errors"
-
 	"github.com/mojocn/base64Captcha"
 )
-
-var driver = base64Captcha.NewDriverDigit(80, 240, 6, 0.7, 80)
-
-var store = &utils.RedisStore{Expiration: 5 * time.Minute}
-
-var captcha = base64Captcha.NewCaptcha(driver, store)
-
-func GenerateCaptcha() (id string, b64s string, err error) {
-	id, b64s, _, err = captcha.Generate()
-	return id, b64s, err
-}
 
 type LoginParams struct {
 	Username  string `json:"username" binding:"required"`
@@ -34,12 +22,42 @@ type LoginResponse struct {
 	UserInfo *data.User `json:"userInfo"`
 }
 
-func Login(p LoginParams) (*LoginResponse, error) {
-	if !store.Verify(p.CaptchaID, p.Captcha, true) {
+type AuthService struct {
+	userRepo *data.UserRepo
+	captcha  *base64Captcha.Captcha
+	store    *utils.RedisStore
+	jwtCfg   utils.JWTConfig
+}
+
+func NewAuthService(d *data.Data, cfg *conf.Config) *AuthService {
+	driver := base64Captcha.NewDriverDigit(80, 240, 6, 0.7, 80)
+	store := &utils.RedisStore{
+		Expiration: 5 * time.Minute,
+		Client:     d.RDB,
+	}
+	return &AuthService{
+		userRepo: data.NewUserRepo(d.DB),
+		captcha:  base64Captcha.NewCaptcha(driver, store),
+		store:    store,
+		jwtCfg: utils.JWTConfig{
+			Secret: cfg.Jwt.Secret,
+			Expire: cfg.Jwt.Expire,
+			Issuer: cfg.Jwt.Issuer,
+		},
+	}
+}
+
+func (s *AuthService) GetCaptcha() (id string, b64s string, err error) {
+	id, b64s, _, err = s.captcha.Generate()
+	return id, b64s, err
+}
+
+func (s *AuthService) Login(p LoginParams) (*LoginResponse, error) {
+	if !s.store.Verify(p.CaptchaID, p.Captcha, true) {
 		return nil, errors.New("验证码错误或已失效")
 	}
 
-	user, err := data.GetUserByUsername(p.Username)
+	user, err := s.userRepo.GetUserByUsername(p.Username)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +75,7 @@ func Login(p LoginParams) (*LoginResponse, error) {
 		return nil, errors.New("账号已被停用")
 	}
 
-	token, err := utils.GenerateToken(user)
+	token, err := utils.GenerateToken(user, s.jwtCfg)
 	if err != nil {
 		return nil, errors.New("生成token失败")
 	}
@@ -67,3 +85,5 @@ func Login(p LoginParams) (*LoginResponse, error) {
 		UserInfo: user,
 	}, nil
 }
+
+func (s *AuthService) Logout() {}

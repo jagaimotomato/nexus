@@ -27,29 +27,37 @@ func (Menu) TableName() string {
 	return "sys_menu"
 }
 
-func GetAllMenus() ([]*Menu, error) {
+type MenuRepo struct {
+	db *gorm.DB
+}
+
+func NewMenuRepo(db *gorm.DB) *MenuRepo {
+	return &MenuRepo{db: db}
+}
+
+func (r *MenuRepo) GetAllMenus() ([]*Menu, error) {
 	var menus []*Menu
-	err := DB.Order("sort asc").Find(&menus).Error
+	err := r.db.Order("sort asc").Find(&menus).Error
 	return menus, err
 }
 
-func GetMenuByID(id uint) (*Menu, error) {
+func (r *MenuRepo) GetMenuByID(id uint) (*Menu, error) {
 	var menu Menu
-	err := DB.First(&menu, id).Error
+	err := r.db.First(&menu, id).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
 	return &menu, err
 }
 
-func CreateMenu(menu *Menu) error {
-	return DB.Create(menu).Error
+func (r *MenuRepo) CreateMenu(menu *Menu) error {
+	return r.db.Create(menu).Error
 }
 
-func UpdateMenu(id uint, updates map[string]interface{}) error {
-	return DB.Model(&Menu{}).Where("id = ?", id).Updates(updates).Error
+func (r *MenuRepo) UpdateMenu(id uint, updates map[string]interface{}) error {
+	return r.db.Model(&Menu{}).Where("id = ?", id).Updates(updates).Error
 }
 
-func DeleteMenu(id uint) error {
-	return DB.Delete(&Menu{}, id).Error
+func (r *MenuRepo) DeleteMenu(id uint) error {
+	return r.db.Delete(&Menu{}, id).Error
 }

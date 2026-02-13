@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"nexus/internal/data"
 	"nexus/internal/response"
 	"nexus/internal/service"
 	"strconv"
@@ -9,10 +8,28 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type MenuHandler struct{}
+type MenuHandler struct {
+	svc *service.MenuService
+}
+
+func NewMenuHandler(s *service.MenuService) *MenuHandler {
+	return &MenuHandler{svc: s}
+}
+
+func (h *MenuHandler) RegisterPublic(r *gin.RouterGroup) {}
+
+func (h *MenuHandler) RegisterPrivate(r *gin.RouterGroup) {
+	menu := r.Group("/menus")
+	{
+		menu.GET("", h.GetList)
+		menu.POST("", h.Create)
+		menu.PUT("/:id", h.Update)
+		menu.DELETE("/:id", h.Delete)
+	}
+}
 
 func (h *MenuHandler) GetList(c *gin.Context) {
-	menus, err := service.GetMenuTree()
+	menus, err := h.svc.GetMenuTree()
 	if err != nil {
 		response.FailWithMessage(c, "获取菜单失败")
 		return
@@ -21,14 +38,14 @@ func (h *MenuHandler) GetList(c *gin.Context) {
 }
 
 func (h *MenuHandler) Create(c *gin.Context) {
-	var req data.Menu
+	var req service.MenuInput
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.FailWithCode(c, response.InvalidParams)
 		return
 	}
-	err := service.CreateMenu(&req)
+	err := h.svc.CreateMenu(&req)
 	if err != nil {
-		response.FailWithMessage(c, "创建失败：" + err.Error())
+		response.FailWithMessage(c, "创建失败："+err.Error())
 		return
 	}
 	response.OK(c)
@@ -37,14 +54,14 @@ func (h *MenuHandler) Create(c *gin.Context) {
 func (h *MenuHandler) Update(c *gin.Context) {
 	idStr := c.Param("id")
 	id, _ := strconv.Atoi(idStr)
-	var req data.Menu
+	var req service.MenuInput
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.FailWithCode(c, response.InvalidParams)
 		return
 	}
-	err := service.UpdateMenu(uint(id), &req)
+	err := h.svc.UpdateMenu(uint(id), &req)
 	if err != nil {
-		response.FailWithMessage(c, "更新失败：" + err.Error())
+		response.FailWithMessage(c, "更新失败："+err.Error())
 		return
 	}
 	response.OK(c)
@@ -53,9 +70,9 @@ func (h *MenuHandler) Update(c *gin.Context) {
 func (h *MenuHandler) Delete(c *gin.Context) {
 	idStr := c.Param("id")
 	id, _ := strconv.Atoi(idStr)
-	err := service.DeleteMenu(uint(id))
+	err := h.svc.DeleteMenu(uint(id))
 	if err != nil {
-		response.FailWithMessage(c, "删除失败：" + err.Error())
+		response.FailWithMessage(c, "删除失败："+err.Error())
 		return
 	}
 	response.OK(c)

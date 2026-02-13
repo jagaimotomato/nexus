@@ -2,16 +2,15 @@ package router
 
 import (
 	"nexus/internal/conf"
+	"nexus/internal/handler"
 	"nexus/internal/logger"
 	"nexus/internal/middleware"
-
-	"nexus/internal/api"
-	"nexus/internal/handler"
+	"nexus/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
 
-func InitRouter(cfg *conf.Config) *gin.Engine {
+func NewRouter(cfg *conf.Config, authHandler *handler.AuthHandler, menuHandler *handler.MenuHandler, ipSecurity *service.IPSecurityService) *gin.Engine {
 	gin.SetMode(cfg.Server.Mode)
 
 	r := gin.New()
@@ -22,34 +21,16 @@ func InitRouter(cfg *conf.Config) *gin.Engine {
 	r.Use(middleware.Cors())
 	r.Use(middleware.Gzip())
 	r.Use(middleware.RequestID())
-	r.Use(middleware.IPBlacklist())
-	r.Use(middleware.RateLimitWithAutoBan(cfg.RateLimit.Qps, cfg.RateLimit.Burst))
+	r.Use(middleware.IPBlacklist(ipSecurity))
+	r.Use(middleware.RateLimitWithAutoBan(cfg.RateLimit.Qps, cfg.RateLimit.Burst, ipSecurity))
 
-	registerAPIRoutes(r)
+	public := r.Group("/api/v1")
+	private := r.Group("/api/v1")
+	private.Use(middleware.JWTAuth(cfg.Jwt))
+
+	authHandler.RegisterPublic(public)
+	authHandler.RegisterPrivate(private)
+	menuHandler.RegisterPrivate(private)
 
 	return r
-}
-
-func registerAPIRoutes(r *gin.Engine) {
-	authAPI := &api.AuthApi{}
-	
-	public := r.Group("/api/v1")
-	{
-		public.POST("/auth/captcha", authAPI.GetCaptcha)
-		public.POST("/auth/login", authAPI.Login)
-	}
-    menuHandler := &handler.MenuHandler{}
-	private := r.Group("/api/v1")
-	private.Use(middleware.JWTAuth())
-	{
-		private.POST("/auth/logout", authAPI.Logout)
-
-		menu := private.Group("/menus")
-		{
-			menu.GET("", menuHandler.GetList)
-			menu.POST("", menuHandler.Create)
-			menu.PUT("/:id", menuHandler.Update)
-			menu.DELETE("/:id", menuHandler.Delete)
-		}
-	}
 }

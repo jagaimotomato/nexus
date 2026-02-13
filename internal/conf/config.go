@@ -68,9 +68,8 @@ type RateLimit struct {
 	Burst int `mapstructure:"burst"`
 }
 
-var GlobalConfig Config
-
 func InitConfig() *Config {
+	cfg := &Config{}
 	// 告诉 Viper 配置文件在哪里、叫什么
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")          // 文件类型
@@ -87,7 +86,7 @@ func InitConfig() *Config {
 	}
 
 	// 将读取到的内容解析到结构体
-	if err := viper.Unmarshal(&GlobalConfig); err != nil {
+	if err := viper.Unmarshal(cfg); err != nil {
 		panic(fmt.Errorf("配置解析失败: %w", err))
 	}
 
@@ -97,11 +96,11 @@ func InitConfig() *Config {
 	viper.OnConfigChange(func(e fsnotify.Event) {
 		fmt.Println("配置文件已修改:", e.Name)
 		// 重新反序列化到全局变量 (注意并发安全，生产环境可能需要加读写锁)
-		if err := viper.Unmarshal(&GlobalConfig); err != nil {
+		if err := viper.Unmarshal(cfg); err != nil {
 			fmt.Printf("配置重载失败: %s\n", err)
 		}
 		// 如果使用了 Logger，这里可能还需要动态调整 Log Level
 	})
 
-	return &GlobalConfig
+	return cfg
 }

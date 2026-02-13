@@ -5,6 +5,15 @@ import (
 
 	"gorm.io/gorm"
 )
+
+type UserRepo struct {
+	db *gorm.DB
+}
+
+func NewUserRepo(db *gorm.DB) *UserRepo {
+	return &UserRepo{db: db}
+}
+
 type User struct {
 	BaseModel
 	Username string `gorm:"uniqueIndex;size:100;not null;comment:用户名" json:"username"`
@@ -23,9 +32,9 @@ func (User) TableName() string {
 	return "sys_user"
 }
 
-func GetUserByUsername(username string) (*User, error) {
+func (r *UserRepo) GetUserByUsername(username string) (*User, error) {
 	var user User
-	err := DB.Where("username = ?", username).Preload("Roles").First(&user).Error
+	err := r.db.Where("username = ?", username).Preload("Roles").First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -35,28 +44,26 @@ func GetUserByUsername(username string) (*User, error) {
 	return &user, nil
 }
 
-func GetUserList(page, pageSize int) ([]*User, int64, error) {
+func (r *UserRepo) GetUserList(page, pageSize int) ([]*User, int64, error) {
 	var users []*User
 	var total int64
-	err := DB.Model(&User{}).Count(&total).Error
+	err := r.db.Model(&User{}).Count(&total).Error
 	if err != nil {
 		return nil, 0, err
 	}
-	// 预加载角色信息
-	err = DB.Preload("Roles").Offset((page - 1) * pageSize).Limit(pageSize).Find(&users).Error
+	err = r.db.Preload("Roles").Offset((page - 1) * pageSize).Limit(pageSize).Find(&users).Error
 	return users, total, err
 }
 
-func CreateUser(user *User) error {
-	return DB.Create(user).Error
+func (r *UserRepo) CreateUser(user *User) error {
+	return r.db.Create(user).Error
 }
 
-func UpdateUser(id uint, updates map[string]interface{}, roleIds []uint) error {
-	return DB.Transaction(func(tx *gorm.DB) error {
+func (r *UserRepo) UpdateUser(id uint, updates map[string]interface{}, roleIds []uint) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(&User{}).Where("id = ?", id).Updates(updates).Error; err != nil {
 			return err
 		}
-		// 更新角色关联
 		if roleIds != nil {
 			var user User
 			user.ID = id
@@ -74,6 +81,6 @@ func UpdateUser(id uint, updates map[string]interface{}, roleIds []uint) error {
 	})
 }
 
-func DeleteUser(id uint) error {
-	return DB.Delete(&User{}, id).Error
+func (r *UserRepo) DeleteUser(id uint) error {
+	return r.db.Delete(&User{}, id).Error
 }

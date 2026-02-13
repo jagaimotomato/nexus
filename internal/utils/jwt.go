@@ -4,7 +4,6 @@ import (
 	"errors"
 	"time"
 
-	"nexus/internal/conf"
 	"nexus/internal/data"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -18,11 +17,15 @@ type UserClaims struct {
 	jwt.RegisteredClaims
 }
 
+type JWTConfig struct {
+	Secret string
+	Expire int
+	Issuer string
+}
+
 // GenerateToken 生成 Token
 // 接收完整的 User 对象，以便提取 ID 和 Roles
-func GenerateToken(user *data.User) (string, error) {
-	cfg := conf.GlobalConfig.Jwt
-
+func GenerateToken(user *data.User, cfg JWTConfig) (string, error) {
 	// 1. 提取用户角色 Key
 	var roleKeys []string
 	for _, role := range user.Roles {
@@ -47,9 +50,7 @@ func GenerateToken(user *data.User) (string, error) {
 }
 
 // ParseToken 解析 Token
-func ParseToken(tokenString string) (*UserClaims, error) {
-	cfg := conf.GlobalConfig.Jwt
-
+func ParseToken(tokenString string, cfg JWTConfig) (*UserClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")

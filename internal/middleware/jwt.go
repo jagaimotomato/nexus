@@ -3,6 +3,7 @@ package middleware
 import (
 	"strings"
 
+	"nexus/internal/conf"
 	"nexus/internal/response"
 	"nexus/internal/utils"
 
@@ -16,7 +17,7 @@ const (
 	CtxRoles    = "roles"
 )
 
-func JWTAuth() gin.HandlerFunc {
+func JWTAuth(jwtCfg conf.Jwt) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 1. 获取 Authorization Header
 		authHeader := c.GetHeader("Authorization")
@@ -35,7 +36,11 @@ func JWTAuth() gin.HandlerFunc {
 		}
 
 		// 3. 解析 Token
-		claims, err := utils.ParseToken(parts[1])
+		claims, err := utils.ParseToken(parts[1], utils.JWTConfig{
+			Secret: jwtCfg.Secret,
+			Expire: jwtCfg.Expire,
+			Issuer: jwtCfg.Issuer,
+		})
 		if err != nil {
 			response.FailWithDetailed(c, response.AuthFailed, "Token 无效或已过期")
 			c.Abort()
