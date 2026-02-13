@@ -12,6 +12,10 @@ internal/
 internal/handler (控制层 / 接口层)
 职责：“门面担当”。只负责处理 HTTP 请求和响应，不处理业务逻辑。
 
+1. 核心三层架构
+   internal/handler (控制层 / 接口层)
+   职责：“门面担当”。只负责处理 HTTP 请求和响应，不处理业务逻辑。
+
 具体工作：
 
 参数解析：从请求中提取参数（c.ShouldBindJSON, c.Param, c.Query）。
@@ -100,3 +104,20 @@ internal/utils (或 pkg)
 例如：MD5 加密、生成 UUID、时间格式化、文件操作等。
 
 注意：不要把业务逻辑塞到这里，否则会变成“垃圾桶”。
+
+总结：请求的处理流程
+一个请求进来，通常会经历这样的旅程：
+
+Router: 收到请求 /api/v1/menus。
+
+Middleware: 检查 Token，记录日志。
+
+Handler: MenuHandler.Create() 被调用。解析 JSON 参数。
+
+Service: MenuService.Create() 被调用。检查父菜单 ID 是否合法。
+
+Data: data.DB.Create() 被调用。生成 SQL 写入 MySQL。
+
+Data -> Service -> Handler: 层层返回结果。
+
+Handler: 调用 response.Success() 返回 JSON 给前端。
