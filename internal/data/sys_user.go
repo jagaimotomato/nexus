@@ -34,3 +34,46 @@ func GetUserByUsername(username string) (*User, error) {
 	}
 	return &user, nil
 }
+
+func GetUserList(page, pageSize int) ([]*User, int64, error) {
+	var users []*User
+	var total int64
+	err := DB.Model(&User{}).Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+	// 预加载角色信息
+	err = DB.Preload("Roles").Offset((page - 1) * pageSize).Limit(pageSize).Find(&users).Error
+	return users, total, err
+}
+
+func CreateUser(user *User) error {
+	return DB.Create(user).Error
+}
+
+func UpdateUser(id uint, updates map[string]interface{}, roleIds []uint) error {
+	return DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&User{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+			return err
+		}
+		// 更新角色关联
+		if roleIds != nil {
+			var user User
+			user.ID = id
+			var roles []Role
+			if len(roleIds) > 0 {
+				if err := tx.Find(&roles, roleIds).Error; err != nil {
+					return err
+				}
+			}
+			if err := tx.Model(&user).Association("Roles").Replace(roles); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func DeleteUser(id uint) error {
+	return DB.Delete(&User{}, id).Error
+}
