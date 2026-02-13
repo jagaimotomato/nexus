@@ -4,13 +4,15 @@ import (
 	"fmt"
 
 	"github.com/spf13/viper"
+
+	"github.com/fsnotify/fsnotify"
 )
 
 type Config struct {
-	Server Server `mapstructure:"server"`
-	Data   Data   `mapstructure:"data"`
-	Jwt    Jwt    `mapstructure:"jwt"`
-	Log    Log    `mapstructure:"log"`
+	Server    Server    `mapstructure:"server"`
+	Data      Data      `mapstructure:"data"`
+	Jwt       Jwt       `mapstructure:"jwt"`
+	Log       Log       `mapstructure:"log"`
 	RateLimit RateLimit `mapstructure:"ratelimit"`
 }
 
@@ -62,7 +64,7 @@ type Log struct {
 }
 
 type RateLimit struct {
-	Qps int `mapstructure:"qps"`
+	Qps   int `mapstructure:"qps"`
 	Burst int `mapstructure:"burst"`
 }
 
@@ -71,17 +73,17 @@ var GlobalConfig Config
 func InitConfig() *Config {
 	// 告诉 Viper 配置文件在哪里、叫什么
 	viper.SetConfigName("config")
-	viper.SetConfigType("yaml") // 文件类型
-	viper.AddConfigPath("./configs") // 配置文件路径
+	viper.SetConfigType("yaml")          // 文件类型
+	viper.AddConfigPath("./configs")     // 配置文件路径
 	viper.AddConfigPath("../../configs") // 配置文件路径
 
 	if err := viper.ReadInConfig(); err != nil {
 		// 如果是“文件未找到”错误，可以根据情况处理，否则直接 panic
-        if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-            panic("未找到配置文件 config.yaml，请检查路径")
-        } else {
-            panic(fmt.Errorf("读取配置文件出错: %w", err))
-        }
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			panic("未找到配置文件 config.yaml，请检查路径")
+		} else {
+			panic(fmt.Errorf("读取配置文件出错: %w", err))
+		}
 	}
 
 	// 将读取到的内容解析到结构体
@@ -90,6 +92,16 @@ func InitConfig() *Config {
 	}
 
 	fmt.Println("✅ 配置加载成功:", viper.ConfigFileUsed())
+
+	viper.WatchConfig()
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		fmt.Println("配置文件已修改:", e.Name)
+		// 重新反序列化到全局变量 (注意并发安全，生产环境可能需要加读写锁)
+		if err := viper.Unmarshal(&GlobalConfig); err != nil {
+			fmt.Printf("配置重载失败: %s\n", err)
+		}
+		// 如果使用了 Logger，这里可能还需要动态调整 Log Level
+	})
 
 	return &GlobalConfig
 }
