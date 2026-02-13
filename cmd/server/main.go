@@ -1,8 +1,13 @@
 ﻿package main
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"nexus/internal/conf"
 	"nexus/internal/data"
@@ -44,9 +49,36 @@ var rootCmd = &cobra.Command{
 		addr := fmt.Sprintf(":%d", cfg.Server.HttpPort)
 		logger.Log.Info("服务启动成功", zap.String("addr", addr))
 
-		if err := r.Run(addr); err != nil {
-			logger.Log.Fatal("服务启动失败", zap.Error(err))
+		srv := &http.Server{
+			Addr: fmt.Sprintf(":%d", cfg.Server.HttpPort),
+			Handler: r,
 		}
+
+		// 3. 在 goroutine 中启动服务
+go func() {
+    if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+        logger.Log.Fatal("listen: ", zap.Error(err))
+    }
+}()
+
+// 4. 监听中断信号
+quit := make(chan os.Signal, 1)
+// kill (无参) 默认发送 syscall.SIGTERM
+// kill -2 发送 syscall.SIGINT (Ctrl+C)
+// kill -9 发送 syscall.SIGKILL (无法捕获)
+signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+<-quit // 阻塞直到收到信号
+logger.Log.Info("Shutting down server...")
+
+// 5. 设置超时上下文，执行 Shutdown
+ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+defer cancel()
+
+if err := srv.Shutdown(ctx); err != nil {
+    logger.Log.Fatal("Server forced to shutdown: ", zap.Error(err))
+}
+
+logger.Log.Info("Server exiting")
 	},
 }
 
