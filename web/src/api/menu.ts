@@ -22,6 +22,10 @@ export const getMenuList = () => {
   return request.get<MenuItem[]>("/menus");
 };
 
+export const getUserMenuTree = () => {
+  return request.get<MenuItem[]>("/menus/user");
+};
+
 export const createMenu = (data: Partial<MenuItem>) => {
   return request.post("/menus", data);
 };

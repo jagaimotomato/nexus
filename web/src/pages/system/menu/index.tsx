@@ -192,10 +192,96 @@ const MenuManagement: React.FC = () => {
       <MenuModal
         visible={modalVisible}
         onVisibleChange={setModalVisible}
-        currentRow={currentRow}
-        menuTree={menuTree}
-        onSubmit={handleSubmit}
-      />
+        initialValues={currentRow || {}}
+        onFinish={async (value) => {
+          if (currentRow?.id) {
+            await handleUpdate(value as MenuItem)
+          } else {
+            await hanldeAdd(value as MenuItem)
+          }
+          return true
+        }}
+        modalProps={{
+          destroyOnClose: true,
+        }}
+      >
+        <ProFormRadio.Group
+          name="type"
+          label="菜单类型"
+          options={[
+            { label: "目录", value: 1 },
+            { label: "菜单", value: 2 },
+            { label: "按钮", value: 3 },
+          ]}
+        />
+
+        <ProFormTreeSelect
+          name="pid"
+          label="上级菜单"
+          placeholder="请选择上级菜单（留空则为顶级）"
+          fieldProps={{
+            treeData: menuTree,
+            fieldNames: { label: "title", value: "id", children: "children" },
+            treeDefaultExpandAll: true,
+          }}
+        />
+
+        <div style={{ display: "flex", gap: 16 }}>
+          <ProFormText
+            width="md"
+            name="title"
+            label="显示标题"
+            placeholder="例如：系统管理"
+            rules={[{ required: true }]}
+          />
+          <ProFormText
+            width="md"
+            name="name"
+            label="路由名称"
+            placeholder="例如：System"
+          />
+        </div>
+
+        <div style={{ display: "flex", gap: 16 }}>
+          <ProFormText
+            width="md"
+            name="icon"
+            label="图标"
+            placeholder="Antd 图标名称"
+          />
+          <ProFormDigit width="md" name="sort" label="排序" min={0} />
+        </div>
+
+        {/* 仅目录和菜单显示 */}
+        <ProFormText name="path" label="路由路径" placeholder="例如：/system" />
+        <ProFormText
+          name="redirect"
+          label="重定向路径"
+          placeholder="例如：/system/menu"
+        />
+
+        {/* 仅菜单显示 */}
+        <ProFormText
+          name="component"
+          label="组件路径"
+          placeholder="例如：/system/menu/index"
+        />
+
+        <ProFormText
+          name="perms"
+          label="权限标识"
+          placeholder="例如：sys:menu:add"
+        />
+
+        <div style={{ display: "flex", gap: 16 }}>
+          <ProFormSwitch name="hidden" label="隐藏菜单" />
+          <ProFormSwitch
+            name="keepAlive"
+            label="页面缓存"
+            initialValue={true}
+          />
+        </div>
+      </ModalForm>
     </>
   )
 }

@@ -6,7 +6,11 @@ interface UserInfo {
   username: string;
   name: string;
   avatar: string;
-  roles: string[];
+  roles: Array<{
+    id?: number;
+    name?: string;
+    key?: string;
+  }>;
 }
 
 interface UserState {
